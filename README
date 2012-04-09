@@ -1,0 +1,42 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=4009
+
+This is a modification of vimscript #1929 (DBGp client for PHP, which in turn is based on vimscript#1152 - remote PHP debugger) to make it work on Windows too. See that script for a link to a (Linux) tutorial on using vim to debug php.
+
+With this script you should be able to perform simple (minimal) debugging steps into a php web page or a php command line script (actually the php script may also be a GUI application, not necessarily command-line) Note that there are a number of DBGp clients out there with more features (see a list at http://xdebug.org/docs/remote), but you might want this script if you want to stay in Vim when debugging, and if you do not need additional features.
+
+To clarify: DBGp is the protocol for communication between a debug server (the debugger engine) and a debug client (the user interface with the opened source files and breakpoint markers on the proper lines). It is suited for remote debugging of your scripts, but it is the same mechanism used for debugging scripts locally also. The XDebug php extension is the debugger engine, that implements DBGp in php. This vim script is the debugger client that implements DBGp for Vim.
+
+You need to have XDebug extension installed and enabled, in order for php to work as a debug server and start a debugging session (see the XDebug documentation at http://xdebug.org/docs/). This script will only turn Vim into the debug client. You will need python2 installed (http://www.python.org/download/, not tested with python3) and Vim with +python feature (most Vim distributions have it, see :version command).
+
+To debug web pages, you may want to install the XDebug extension for Firefox/Chrome/Safari/Opera (maybe others?), or else you will need to manually add an XDEBUG_SESSSION_START query parameter to the page URL just before starting the debug session (but to submit a form and debug the referred page using a manual URL parameter, you will need a lot of extra work).
+
+For command line, XDebug expects the XDEBUG_CONFIG environment variable to be set before php is invoked, in order to start a debugging session (and connect to the debug client). On a bash/sh shell (including cygwin/mingw if on Windows), the command line would look like:
+   XDEBUG_CONFIG="ide-key=vim"    php     ../path/to/script-file.php   script-args....
+On a plain cmd.exe console window on Windows you would need separate commands:
+    SET XDEBUG_CONFIG=ide-key=vim
+    php  ../path/to/script-file.php   script-args...
+
+You might try the script with other debuggers than php, that implement the DBGp protocol (protocol specifications can be found on XDebug web site at http://xdebug.org/docs-dbgp.php), but it has only been tested with php (that is, with XDebug). If you do, you may leave the script author a message about it.
+
+Currently the script still has a few bugs, is missing a documentation file (but it will display a shortcuts window once debugging is started), and only supports simple debugging commands. Once a debugging session is started, you may evaluate php expressions, including function calls, with the ,e (a comma and the letter e) keyboard shortcut. Note that XDebug (DBGp) has a "starting" state when your script is not being debugged yet (is not started) but the debugging session is started (just use step in/step over to enter your script), and a similar "stopping" state when your script has finished, but the debugging session is still active (for collecting certain statistics and other information, use <F6> - stop debugging to end the debugging session). The web browser will keep loading the page (will show the loading indicator) until you finish the debugging session.
+
+In general different debuggers use different keys for debugging functions. This script will map by default almost all function keys F1 to F12 for debugging functions. However you most likely already have other mappings for some of these (or you may have plug-in scripts that have other mappings for some of these), so you should set the global option g:debuggerMapDefaultKeys in your ~/.vimrc file to one of these values:
+     0 - disable default key mappings (use this if you have set your own mapping in ~/.vimrc for the debugging functions, recommanded)
+     1 - map  <F1> to <F12> keys
+     2 - map <M-F1>..<M-F12> instead of <F1>..<F12>
+     3 - map <S-F1>..<S-F12> instead of <F1>..<F12>
+     4 - map <C-F1>..<C-F12> instead of <F1>..<F12>
+     5 - map <M-C-F1..12> instead of <F1>..<F12>
+     6 - map <M-S-F1..12> instead of <F1>..<F12>
+     7 - map <C-S-F1..12> instead of <F1>..<F12>
+
+For example to use Alt+Ctrl+F1 to Alt+Ctrl+F12 for debugging, write the following line in ~/.vimrc (or ~/_vimrc on Windows)
+     let g:debuggerMapDefaultKeys = 5
+Beware that Vim may not be able to sense all of these key combinations on all systems. Also, if you change this option, note that the shortcuts window in the debugger will still display <F1>,...<F12> as the debugging keys...
+
+Another known problem is that the script does not properly save/restore Vim windows for multiple tabs before and after a debugging session (it just tries to use the :mksession and :source commands for this purpose) and as such it is currently recommended that you start a new vim instance before debugging, or use a single tab in your (existing) vim session.
+
+If you would like to submit patches or you have modifications to the script, you can send them to the author.
+
+TODO:
+When debugging files on a remote web server (not the local host) you can not currently open the source files being debugged, so this is not supported yet. It is possible to modify the script so as to include a user mapping for remote files to local files (if you have an exact copy of the source files on the local computer) or to some other remote protocol (if you can open the remote files through FTP / HTTP / VPN / SSH / network shares...). Leave the author a message if you need this (so I can have an estimate of how many people want the feature and maybe include it in a new version).
