@@ -116,6 +116,11 @@
 
 " Do not source this script when python is not compiled in.
 if !has("python")
+    " Set up a message for the user as soon as Vim starts-up
+    augroup dbgp_debugger
+	autocmd  VimEnter * echomsg '"debugger.vim" failed to load python'
+    augroup END
+
     finish
 endif
 
