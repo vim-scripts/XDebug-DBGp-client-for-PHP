@@ -26,10 +26,9 @@
 " Name Of File: debugger.vim, debugger.py
 "  Description: remote debugger interface to DBGp protocol
 "   Maintainer:	Timothy Madden <terminatorul <at> gmail.com>
-"		Original authors:
-"		    Sam Ghods <sam <at> box.net>
-"		    Seung Woo Shin <segv <at> sayclub.com>
-"  Last Change: June 18, 2007
+"      Authors: Sam Ghods <sam <at> box.net>
+"		Seung Woo Shin <segv <at> sayclub.com>
+"  Last Change: Apr 13, 2012
 "          URL: http://www.vim.org/scripts/script.php?script_id=1929
 "      Version: 1.1.1
 "               Originally written by Seung Woo Shin <segv <at> sayclub.com>
@@ -82,6 +81,17 @@
 "
 "                 let g:debuggerMiniBufExpl = 1
 "
+"               To disable or select the default key mappings (to add your
+"               own) set g:debuggerMapDefaultKeys to
+"		    0 - disable (to include your own mapping in .vimrc, recommanded)
+"		    1 - enable (default)
+"		    2 - use <M-F1>..<M-F12> instead of <F1>..<F12>
+"		    3 - use <S-F1>..<S-F12> instead of <F1>..<F12>
+"		    4 - use <C-F1>..<C-F12> instead of <F1>..<F12>
+"		    5 - use <M-C-F1..12> instead of <F1>..<F12>
+"		    6 - use <M-S-F1..12> instead of <F1>..<F12>
+"		    7 - use <C-S-F1..12> instead of <F1>..<F12>
+"
 "      History: 1.1.1 o Added a check so the script doesn't load if python is
 "                     not compiled in. (Contributed by Lars Becker.)
 "               1.1   o Added vim variable to change port.
@@ -118,7 +128,12 @@
 if !has("python")
     " Set up a message for the user as soon as Vim starts-up
     augroup dbgp_debugger
-	autocmd  VimEnter * echomsg '"debugger.vim" failed to load python'
+	autocmd  VimEnter * echohl WarningMsg
+	autocmd  VimEnter * try
+	autocmd  VimEnter *	echomsg expand('<sfile>:t') . ' failed to load python'
+	autocmd  VimEnter * finally
+	autocmd  VimEnter *	echohl None
+	autocmd  VimEnter * endtry
     augroup END
 
     finish
@@ -145,15 +160,19 @@ let s:external_script =
 if len(s:external_script) > 0
     execute "pyfile " . s:external_script[0]
 else
-    call confirm(expand('<sfile>:t').': Unable to find ' . expand('<sfile>:t:r') . '.py in &runtimepath.', '&Ok')
+    " Set up a message for the user as soon as Vim starts-up
+    augroup dbgp_debugger
+	autocmd  VimEnter * echohl WarningMsg
+	autocmd  VimEnter * try
+	autocmd  VimEnter *	echomsg expand('<sfile>:t') . ' failed to find ' . expand('<sfile>:t:r') . '.py.'
+	autocmd  VimEnter * finally
+	autocmd  VimEnter *	echohl None
+	autocmd  VimEnter * endtry
+    augroup END
+
     finish
 endif
 
-
-map <F1> :python debugger_resize()<cr>
-map <F2> :python debugger_command('step_into')<cr>
-map <F3> :python debugger_command('step_over')<cr>
-map <F4> :python debugger_command('step_out')<cr>
 
 map <Leader>dr :python debugger_resize()<cr>
 map <Leader>di :python debugger_command('step_into')<cr>
@@ -162,17 +181,140 @@ map <Leader>dt :python debugger_command('step_out')<cr>
 
 nnoremap ,e :python debugger_watch_input("eval")<cr>A
 
-map <F5> :python debugger_run()<cr>
-map <F6> :python debugger_quit()<cr>
+if !exists('g:debuggerMapDefaultKeys') || g:debuggerMapDefaultKeys == 1
+    map <F1> :python debugger_resize()<cr>
+    map <F2> :python debugger_command('step_into')<cr>
+    map <F3> :python debugger_command('step_over')<cr>
+    map <F4> :python debugger_command('step_out')<cr>
 
-map <F7> :python debugger_command('step_into')<cr>
-map <F8> :python debugger_command('step_over')<cr>
-map <F9> :python debugger_command('step_out')<cr>
+    map <F5> :python debugger_run()<cr>
+    map <F6> :python debugger_quit()<cr>
 
-map <F11> :python debugger_context()<cr>
-map <F12> :python debugger_property()<cr>
-map <F11> :python debugger_watch_input("context_get")<cr>A<cr>
-map <F12> :python debugger_watch_input("property_get", '<cword>')<cr>A<cr>
+    map <F7> :python debugger_command('step_into')<cr>
+    map <F8> :python debugger_command('step_over')<cr>
+    map <F9> :python debugger_command('step_out')<cr>
+
+    map <F11> :python debugger_context()<cr>
+    map <F12> :python debugger_property()<cr>
+    map <F11> :python debugger_watch_input("context_get")<cr>A<cr>
+    map <F12> :python debugger_watch_input("property_get", '<cword>')<cr>A<cr>
+
+elseif exists('g:debuggerMapDefaultKeys') && g:debuggerMapDefaultKeys == 2
+
+    map <M-F1> :python debugger_resize()<cr>
+    map <M-F2> :python debugger_command('step_into')<cr>
+    map <M-F3> :python debugger_command('step_over')<cr>
+    map <M-F4> :python debugger_command('step_out')<cr>
+    map <M-C-F4> :python debugger_command('step_out')<cr>
+
+    map <M-F5> :python debugger_run()<cr>
+    map <M-F6> :python debugger_quit()<cr>
+
+    map <M-F7> :python debugger_command('step_into')<cr>
+    map <M-F8> :python debugger_command('step_over')<cr>
+    map <M-F9> :python debugger_command('step_out')<cr>
+
+    map <M-F11> :python debugger_context()<cr>
+    map <M-F12> :python debugger_property()<cr>
+    map <M-F11> :python debugger_watch_input("context_get")<cr>A<cr>
+    map <M-F12> :python debugger_watch_input("property_get", '<cword>')<cr>A<cr>
+
+elseif exists('g:debuggerMapDefaultKeys') && g:debuggerMapDefaultKeys == 3
+
+    map <S-F1> :python debugger_resize()<cr>
+    map <S-F2> :python debugger_command('step_into')<cr>
+    map <S-F3> :python debugger_command('step_over')<cr>
+    map <S-F4> :python debugger_command('step_out')<cr>
+
+    map <S-F5> :python debugger_run()<cr>
+    map <S-F6> :python debugger_quit()<cr>
+
+    map <S-F7> :python debugger_command('step_into')<cr>
+    map <S-F8> :python debugger_command('step_over')<cr>
+    map <S-F9> :python debugger_command('step_out')<cr>
+
+    map <S-F11> :python debugger_context()<cr>
+    map <S-F12> :python debugger_property()<cr>
+    map <S-F11> :python debugger_watch_input("context_get")<cr>A<cr>
+    map <S-F12> :python debugger_watch_input("property_get", '<cword>')<cr>A<cr>
+
+elseif exists('g:debuggerMapDefaultKeys') && g:debuggerMapDefaultKeys == 4
+
+    map <C-F1> :python debugger_resize()<cr>
+    map <C-F2> :python debugger_command('step_into')<cr>
+    map <C-F3> :python debugger_command('step_over')<cr>
+    map <C-F4> :python debugger_command('step_out')<cr>
+
+    map <C-F5> :python debugger_run()<cr>
+    map <C-F6> :python debugger_quit()<cr>
+
+    map <C-F7> :python debugger_command('step_into')<cr>
+    map <C-F8> :python debugger_command('step_over')<cr>
+    map <C-F9> :python debugger_command('step_out')<cr>
+
+    map <C-F11> :python debugger_context()<cr>
+    map <C-F12> :python debugger_property()<cr>
+    map <C-F11> :python debugger_watch_input("context_get")<cr>A<cr>
+    map <C-F12> :python debugger_watch_input("property_get", '<cword>')<cr>A<cr>
+
+elseif exists('g:debuggerMapDefaultKeys') && g:debuggerMapDefaultKeys == 5
+
+    map <M-C-F1> :python debugger_resize()<cr>
+    map <M-C-F2> :python debugger_command('step_into')<cr>
+    map <M-C-F3> :python debugger_command('step_over')<cr>
+    map <M-C-F4> :python debugger_command('step_out')<cr>
+
+    map <M-C-F5> :python debugger_run()<cr>
+    map <M-C-F6> :python debugger_quit()<cr>
+
+    map <M-C-F7> :python debugger_command('step_into')<cr>
+    map <M-C-F8> :python debugger_command('step_over')<cr>
+    map <M-C-F9> :python debugger_command('step_out')<cr>
+
+    map <M-C-F11> :python debugger_context()<cr>
+    map <M-C-F12> :python debugger_property()<cr>
+    map <M-C-F11> :python debugger_watch_input("context_get")<cr>A<cr>
+    map <M-C-F12> :python debugger_watch_input("property_get", '<cword>')<cr>A<cr>
+
+elseif exists('g:debuggerMapDefaultKeys') && g:debuggerMapDefaultKeys == 6
+
+    map <M-S-F1> :python debugger_resize()<cr>
+    map <M-S-F2> :python debugger_command('step_into')<cr>
+    map <M-S-F3> :python debugger_command('step_over')<cr>
+    map <M-S-F4> :python debugger_command('step_out')<cr>
+    map <M-C-F4> :python debugger_command('step_out')<cr>
+
+    map <M-S-F5> :python debugger_run()<cr>
+    map <M-S-F6> :python debugger_quit()<cr>
+
+    map <M-S-F7> :python debugger_command('step_into')<cr>
+    map <M-S-F8> :python debugger_command('step_over')<cr>
+    map <M-S-F9> :python debugger_command('step_out')<cr>
+
+    map <M-S-F11> :python debugger_context()<cr>
+    map <M-S-F12> :python debugger_property()<cr>
+    map <M-S-F11> :python debugger_watch_input("context_get")<cr>A<cr>
+    map <M-S-F12> :python debugger_watch_input("property_get", '<cword>')<cr>A<cr>
+
+elseif exists('g:debuggerMapDefaultKeys') && g:debuggerMapDefaultKeys == 7
+
+    map <C-S-F1> :python debugger_resize()<cr>
+    map <C-S-F2> :python debugger_command('step_into')<cr>
+    map <C-S-F3> :python debugger_command('step_over')<cr>
+    map <C-S-F4> :python debugger_command('step_out')<cr>
+
+    map <C-S-F5> :python debugger_run()<cr>
+    map <C-S-F6> :python debugger_quit()<cr>
+
+    map <C-S-F7> :python debugger_command('step_into')<cr>
+    map <C-S-F8> :python debugger_command('step_over')<cr>
+    map <C-S-F9> :python debugger_command('step_out')<cr>
+
+    map <C-S-F11> :python debugger_context()<cr>
+    map <C-S-F12> :python debugger_property()<cr>
+    map <C-S-F11> :python debugger_watch_input("context_get")<cr>A<cr>
+    map <C-S-F12> :python debugger_watch_input("property_get", '<cword>')<cr>A<cr>
+endif
 
 hi DbgCurrent term=reverse ctermfg=White ctermbg=Red gui=reverse
 hi DbgBreakPt term=reverse ctermfg=White ctermbg=Green gui=reverse
